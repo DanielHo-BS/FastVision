@@ -12,13 +12,22 @@ This project demonstrates how to accelerate image classification inference by co
 ## Installation
 
 ### Prerequisites
-- Python 3.8+
-- pip
+- Python 3.12 (required for onnxruntime compatibility)
+- UV (Python package installer)
+
+### Install UV
+First, install UV using pip:
+```bash
+pip install uv
+```
 
 ### Install Dependencies
+Using UV to install dependencies (much faster than pip):
 ```bash
-pip install fastapi uvicorn torch torchvision onnx onnxruntime pillow numpy
+uv add fastapi uvicorn torch torchvision onnx onnxruntime pillow numpy
 ```
+
+Note: This project requires Python 3.12 as onnxruntime only supports Python 3.10 and above.
 
 ## Running the Project
 ### 1. Export PyTorch Model to ONNX
