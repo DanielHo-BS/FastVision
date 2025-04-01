@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影像分類 Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        #result {
+            margin-top: 20px;
+        }
+        #result p {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>影像分類 Demo (PyTorch vs ONNX)</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+        <label for="file">選擇影像文件：</label>
+        <input type="file" id="file" name="file" accept="image/*">
+        <button type="submit">上傳並分類</button>
+    </form>
+
+    <div id="result">
+        <p><strong>PyTorch 預測結果：</strong><span id="pytorch-pred"></span></p>
+        <p><strong>ONNX 預測結果：</strong><span id="onnx-pred"></span></p>
+        <p><strong>PyTorch 推論時間：</strong><span id="pytorch-time"></span> 秒</p>
+        <p><strong>ONNX 推論時間：</strong><span id="onnx-time"></span> 秒</p>
+    </div>
+
+    <script>
+        document.getElementById("upload-form").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById("file");
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            const response = await fetch("/predict/", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+
+            document.getElementById("pytorch-pred").innerText = result.pytorch_prediction;
+            document.getElementById("onnx-pred").innerText = result.onnx_prediction;
+            document.getElementById("pytorch-time").innerText = result.pytorch_time.toFixed(4);
+            document.getElementById("onnx-time").innerText = result.onnx_time.toFixed(4);
+        });
+    </script>
+</body>
+</html>
