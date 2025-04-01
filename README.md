@@ -22,9 +22,16 @@ pip install uv
 ```
 
 ### Install Dependencies
-Using UV to install dependencies (much faster than pip):
+You can install dependencies using UV in two ways:
+
+#### Method 1: Direct Installation
 ```bash
 uv add fastapi uvicorn torch torchvision onnx onnxruntime pillow numpy
+```
+
+#### Method 2: Using [pyproject.toml](./pyproject.toml)
+```bash
+uv sync
 ```
 
 Note: This project requires Python 3.12 as onnxruntime only supports Python 3.10 and above.
