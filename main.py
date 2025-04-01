@@ -5,11 +5,12 @@ import time
 import numpy as np
 import onnx
 import onnxruntime as ort
+import argparse
 
 class Model:
-    def __init__(self):
+    def __init__(self, args):
         # Initialize model and environment
-        self.device = self._setup_env()
+        self.device = self._setup_env(args)
         self.model = self._init_model()
         self.onnx_model = None
         self.ort_session = None
@@ -21,9 +22,14 @@ class Model:
         except Exception as e:
             print(f"Error setting model to eval mode: {e}")
 
-    def _setup_env(self):
+    def _setup_env(self, args):
         """Set up the computing environment. Always use CPU for consistency."""
-        return torch.device("cpu")
+        if args.device == "cpu":
+            return torch.device("cpu")
+        elif args.device == "gpu":
+            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            raise ValueError(f"Invalid device: {args.device}")
 
     def _init_model(self):
         """Initialize ResNet18 model with ImageNet weights."""
@@ -80,7 +86,8 @@ class Model:
 
     def _init_ort_session(self):
         """Initialize ONNX Runtime session for inference."""
-        return ort.InferenceSession("model.onnx")
+        providers = ["CUDAExecutionProvider"] if self.device == "gpu" else ["CPUExecutionProvider"]
+        return ort.InferenceSession("model.onnx", providers=providers)
 
     def inference_onnx(self, input_tensor):
         """
@@ -108,9 +115,9 @@ class Model:
         print(f"ONNX average inference time: {avg_time:.6f} seconds per run")
         return avg_time
 
-def main():
+def main(args):
     # Create model instance
-    model = Model()
+    model = Model(args)
     
     # Create sample input tensor
     dummy_input = torch.randn(1, 3, 224, 224).to(model.device)
@@ -130,4 +137,8 @@ def main():
     print(f"ONNX is {speedup:.2f}x faster than PyTorch")
     
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='PyTorch to ONNX conversion and inference time comparison')
+    parser.add_argument('--device', type=str, default='cpu', required=False,
+                        help='Device to run the model on (cpu, gpu, etc.)')
+    args = parser.parse_args()
+    main(args)
