@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import torch
 import torchvision.transforms as transforms
@@ -8,8 +9,17 @@ import time
 from model import Model
 import argparse
 
-# 初始化 FastAPI 應用
+# 初始化 FastAPI
 app = FastAPI()
+
+# 允許 CORS 跨域請求（讓 React 前端可以存取）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 設定裝置
 parser = argparse.ArgumentParser()
@@ -24,9 +34,7 @@ transform = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-# 1000 類別標籤（這裡用假資料）
-labels = ["class_" + str(i) for i in range(1000)] 
-
+# API：處理影像上傳並執行 PyTorch 和 ONNX 推論
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...)):
     image = Image.open(file.file).convert("RGB")
@@ -51,5 +59,5 @@ async def predict(file: UploadFile = File(...)):
         "onnx_speedup": round(pytorch_time / onnx_time, 2)
     })
 
-# 啟動 API 伺服器指令
+# 啟動 FastAPI：
 # uvicorn main:app --reload
