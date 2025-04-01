@@ -46,6 +46,8 @@ export default function Home() {
           <p>PyTorch 推論時間: {result.pytorch_duration} 秒</p>
           <p>ONNX 推論時間: {result.onnx_duration} 秒</p>
           <p>ONNX 加速倍數: {result.onnx_speedup} 倍</p>
+          <p>PyTorch 預測: {result.pytorch_label}</p>
+          <p>ONNX 預測: {result.onnx_label}</p>
         </div>
       )}
 

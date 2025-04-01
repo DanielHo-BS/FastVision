@@ -6,6 +6,8 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 import argparse
+import json
+
 
 class Model:
     def __init__(self, args):
@@ -14,6 +16,10 @@ class Model:
         self.model = self._init_model()
         self.onnx_model = None
         self.ort_session = None
+        self.idx2label = None
+        
+        # Load ImageNet class index
+        self._load_imagenet_class_index()
         
         # Set model to evaluation mode
         try:
@@ -34,7 +40,13 @@ class Model:
     def _init_model(self):
         """Initialize ResNet18 model with ImageNet weights."""
         return models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(self.device)
-    
+
+    def _load_imagenet_class_index(self):
+        """Load ImageNet class index."""
+        with open("imagenet_class_index.json", "r") as f:
+            self.class_idx = json.load(f)
+        self.idx2label = [self.class_idx[str(k)][1] for k in range(len(self.class_idx))]
+
     def inference(self, input_tensor):
         """
         Run PyTorch inference and measure performance.
@@ -56,6 +68,17 @@ class Model:
         avg_time = (end_time - start_time) / 100
         print(f"PyTorch average inference time: {avg_time:.6f} seconds per run")
         return avg_time
+
+    def predict(self, input_tensor):
+        """
+        Run PyTorch inference and measure performance.
+        
+        Args:
+            input_tensor: Input tensor for the model
+        """
+        with torch.no_grad():
+            output = self.model(input_tensor)
+            return self.idx2label[output.argmax(dim=1)]
 
     def convert_to_onnx(self, input_tensor = None):
         """
@@ -119,6 +142,21 @@ class Model:
         print(f"ONNX average inference time: {avg_time:.6f} seconds per run")
         return avg_time
 
+    def predict_onnx(self, input_tensor):
+        """
+        Run ONNX inference and measure performance.
+        
+        Args:
+            input_tensor: Input tensor for the model
+        """
+        input_numpy = input_tensor.cpu().numpy()
+        onnx_input = {self.ort_session.get_inputs()[0].name: input_numpy}
+        with torch.no_grad():
+            output = self.ort_session.run(None, onnx_input)
+            # Get the top 1 prediction from numpy array
+            top_1_pred = np.argmax(output[0])
+            return self.idx2label[top_1_pred]
+
 def main(args):
     # Create model instance
     model = Model(args)
@@ -139,6 +177,17 @@ def main(args):
     speedup = pytorch_time / onnx_time
     print(f"\nPerformance Comparison:")
     print(f"ONNX is {speedup:.2f}x faster than PyTorch")
+
+
+    # Run PyTorch prediction
+    pytorch_output = model.predict(dummy_input)
+    print(f"PyTorch output: {pytorch_output}")
+    
+    # Run ONNX prediction
+    onnx_output = model.predict_onnx(dummy_input)
+    print(f"ONNX output: {onnx_output}")
+    
+    
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PyTorch to ONNX conversion and inference time comparison')

@@ -44,19 +44,22 @@ async def predict(file: UploadFile = File(...)):
     start_time = time.time()
     pytorch_time = model.inference(img_tensor)
     pytorch_duration = time.time() - start_time
+    pytorch_label = model.predict(img_tensor)
 
     # ONNX 推論
     start_time = time.time()
     onnx_time = model.inference_onnx(img_tensor)
     onnx_duration = time.time() - start_time
-
+    onnx_label = model.predict_onnx(img_tensor)
     return JSONResponse({
         "filename": file.filename,
         "pytorch_time": round(pytorch_time, 4),
         "onnx_time": round(onnx_time, 4),
         "pytorch_duration": round(pytorch_duration, 4),
         "onnx_duration": round(onnx_duration, 4),
-        "onnx_speedup": round(pytorch_time / onnx_time, 2)
+        "onnx_speedup": round(pytorch_time / onnx_time, 2),
+        "pytorch_label": pytorch_label,
+        "onnx_label": onnx_label
     })
 
 # 啟動 FastAPI：
