@@ -3,6 +3,14 @@
 ## Overview
 This project demonstrates how to accelerate image classification inference by converting a PyTorch model to ONNX and deploying it using FastAPI. A simple web UI allows users to upload images and compare inference results and speed between PyTorch and ONNX Runtime.
 
+---
+
+<div align="center">
+  <img src="./images/demo.png" width="800" height="450" alt="FastVision Demo">
+</div>
+
+---
+
 ## Features
 - Convert a **ResNet-18** model from PyTorch to ONNX
 - Deploy a **FastAPI** server for image classification
