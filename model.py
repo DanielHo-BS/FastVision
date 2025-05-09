@@ -13,10 +13,12 @@ class Model:
     def __init__(self, args):
         # Initialize model and environment
         self.device = self._setup_env(args)
+        self.model_name = args.model
         self.model = self._init_model(args)
         self.onnx_model = None
         self.ort_session = None
         self.idx2label = None
+        self.onnx_filename = f"{self.model_name}.onnx"
         
         # Load ImageNet class index
         self._load_imagenet_class_index()
@@ -38,7 +40,7 @@ class Model:
             raise ValueError(f"Invalid device: {args.device}")
 
     def _init_model(self, args):
-        """Initialize ResNet18 model with ImageNet weights."""
+        """Initialize model with appropriate weights based on model name."""
         if args.model == "resnet18":
             return models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(self.device)
         elif args.model == "resnet50":
@@ -101,18 +103,18 @@ class Model:
             input_tensor = torch.randn(1, 3, 224, 224).to(self.device)
         
         try:
-            # Export PyTorch model to ONNX format
+            # Export PyTorch model to ONNX format with a unique filename based on the model name
             torch.onnx.export(
                 self.model,           # PyTorch model
                 input_tensor,         # Sample input
-                "model.onnx",         # Output file
+                self.onnx_filename,   # Output file, unique to this model
                 verbose=False         # Don't print detailed export info
             )
             
             # Load and validate the ONNX model
-            self.onnx_model = onnx.load("model.onnx")
+            self.onnx_model = onnx.load(self.onnx_filename)
             onnx.checker.check_model(self.onnx_model)
-            print("ONNX model exported and validated successfully")
+            print(f"ONNX model exported and validated successfully: {self.onnx_filename}")
             
             # Initialize ONNX runtime session
             self.ort_session = self._init_ort_session()
@@ -123,7 +125,7 @@ class Model:
     def _init_ort_session(self):
         """Initialize ONNX Runtime session for inference."""
         providers = ["CUDAExecutionProvider"] if self.device == "gpu" else ["CPUExecutionProvider"]
-        return ort.InferenceSession("model.onnx", providers=providers)
+        return ort.InferenceSession(self.onnx_filename, providers=providers)
 
     def inference_onnx(self, input_tensor):
         """
