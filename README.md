@@ -37,7 +37,34 @@ uv sync
 Note: This project requires Python 3.12 as onnxruntime only supports Python 3.10 and above.
 
 ## Running the Project
-### 1. Export PyTorch Model to ONNX
+
+### Using the Makefile
+This project includes a Makefile to simplify common operations:
+
+```bash
+# Install all dependencies (Python and React)
+make install
+
+# Run only the backend FastAPI server
+make run-backend
+
+# Run only the frontend React server
+make run-frontend
+
+# Run both frontend and backend servers simultaneously
+make run
+
+# Clean up generated files
+make clean
+
+# View all available commands
+make help
+```
+
+### Manual Steps
+If you prefer not to use the Makefile, you can follow these steps:
+
+#### 1. Export PyTorch Model to ONNX
 Run the following script to export a pre-trained ResNet-18 model to ONNX:
 ```python
 import torch
@@ -50,13 +77,13 @@ dummy_input = torch.randn(1, 3, 224, 224)
 torch.onnx.export(model, dummy_input, "resnet18.onnx")
 ```
 
-### 2. Start FastAPI Server
+#### 2. Start FastAPI Server
 ```bash
 uvicorn main:app --reload
 ```
 The server will start at `http://127.0.0.1:8000`.
 
-### 3. Access the Web UI
+#### 3. Access the Web UI
 Open your browser and navigate to:
 ```
 http://127.0.0.1:8000
@@ -84,12 +111,30 @@ POST /predict/
 ```
 
 ## Performance Comparison
-| Model | Inference Time (seconds) |
-|--------|----------------------|
-| PyTorch | 0.12 |
-| ONNX | 0.08 |
+The following table shows detailed performance benchmarks for different models:
 
-ONNX is faster due to optimized inference execution!
+### CPU Performance
+| Model | PyTorch Inference Time (s) | ONNX Inference Time (s) | Speedup |
+|--------|----------------------|----------------------|--------|
+| ResNet-18 | 0.013804 | 0.005321 | 2.59x |
+| ResNet-50 | 0.032168 | 0.012607 | 2.55x |
+| VGG16 | 0.090777 | 0.048402 | 1.88x |
+| Vision Transformer | 0.105784 | 0.063510 | 1.67x |
+
+### GPU Performance
+| Model | PyTorch Inference Time (s) | ONNX Inference Time (s) | Speedup |
+|--------|----------------------|----------------------|--------|
+| ResNet-18 | 0.005254 | 0.005265 | 1.00x |
+| ResNet-50 | 0.004976 | 0.012051 | 0.41x |
+| VGG16 | 0.005242 | 0.054336 | 0.10x |
+| Vision Transformer | 0.006881 | 0.059524 | 0.12x |
+
+### Key Findings:
+- **CPU**: ONNX Runtime consistently delivers faster inference, with ResNet models showing the best optimization (over 2.5x speedup).
+- **GPU**: PyTorch outperforms ONNX Runtime for most models except ResNet-18 (where they are equal).
+- ONNX optimization benefits are primarily seen in CPU deployments.
+
+All measurements were performed averaging 100 inference runs per model.
 
 ## Future Improvements
 - Support for more image classification models

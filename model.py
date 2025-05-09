@@ -1,6 +1,6 @@
 import torch
 import torchvision.models as models
-from torchvision.models import ResNet18_Weights
+from torchvision.models import ResNet18_Weights, ResNet50_Weights, ViT_B_16_Weights, VGG16_Weights
 import time
 import numpy as np
 import onnx
@@ -13,7 +13,7 @@ class Model:
     def __init__(self, args):
         # Initialize model and environment
         self.device = self._setup_env(args)
-        self.model = self._init_model()
+        self.model = self._init_model(args)
         self.onnx_model = None
         self.ort_session = None
         self.idx2label = None
@@ -37,9 +37,18 @@ class Model:
         else:
             raise ValueError(f"Invalid device: {args.device}")
 
-    def _init_model(self):
+    def _init_model(self, args):
         """Initialize ResNet18 model with ImageNet weights."""
-        return models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(self.device)
+        if args.model == "resnet18":
+            return models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(self.device)
+        elif args.model == "resnet50":
+            return models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1).to(self.device)
+        elif args.model == "vgg16":
+            return models.vgg16(weights=VGG16_Weights.IMAGENET1K_V1).to(self.device)
+        elif args.model == "vision_transformer":
+            return models.vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1).to(self.device)
+        else:
+            raise ValueError(f"Invalid model: {args.model}")
 
     def _load_imagenet_class_index(self):
         """Load ImageNet class index."""
@@ -191,6 +200,8 @@ def main(args):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PyTorch to ONNX conversion and inference time comparison')
+    parser.add_argument('--model', type=str, default='resnet18', required=False,
+                        help='Model to use (resnet18, resnet50, vgg16, vision_transformer, etc.)')
     parser.add_argument('--device', type=str, default='cpu', required=False,
                         help='Device to run the model on (cpu, gpu, etc.)')
     args = parser.parse_args()

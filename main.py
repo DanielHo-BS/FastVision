@@ -24,6 +24,7 @@ app.add_middleware(
 # 設定裝置
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', type=str, default='cpu', required=False)
+parser.add_argument('--model', type=str, default='resnet18', required=False)
 args, _ = parser.parse_known_args()
 model = Model(args)
 model.convert_to_onnx()
