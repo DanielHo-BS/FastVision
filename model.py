@@ -1,20 +1,18 @@
 import torch
-import torchvision.models as models
-from torchvision.models import ResNet18_Weights, ResNet50_Weights, ViT_B_16_Weights, VGG16_Weights
 import time
 import numpy as np
 import onnx
 import onnxruntime as ort
 import argparse
 import json
-
+from init_model import setup_env, init_model
 
 class Model:
     def __init__(self, args):
         # Initialize model and environment
-        self.device = self._setup_env(args)
+        self.device = setup_env(args.device)
         self.model_name = args.model
-        self.model = self._init_model(args)
+        self.model = init_model(self.model_name, self.device)
         self.onnx_model = None
         self.ort_session = None
         self.idx2label = None
@@ -29,28 +27,6 @@ class Model:
             self.model.eval()
         except Exception as e:
             print(f"Error setting model to eval mode: {e}")
-
-    def _setup_env(self, args):
-        """Set up the computing environment. Always use CPU for consistency."""
-        if args.device == "cpu":
-            return torch.device("cpu")
-        elif args.device == "gpu":
-            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        else:
-            raise ValueError(f"Invalid device: {args.device}")
-
-    def _init_model(self, args):
-        """Initialize model with appropriate weights based on model name."""
-        if args.model == "resnet18":
-            return models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(self.device)
-        elif args.model == "resnet50":
-            return models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1).to(self.device)
-        elif args.model == "vgg16":
-            return models.vgg16(weights=VGG16_Weights.IMAGENET1K_V1).to(self.device)
-        elif args.model == "vision_transformer":
-            return models.vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1).to(self.device)
-        else:
-            raise ValueError(f"Invalid model: {args.model}")
 
     def _load_imagenet_class_index(self):
         """Load ImageNet class index."""
@@ -124,7 +100,7 @@ class Model:
 
     def _init_ort_session(self):
         """Initialize ONNX Runtime session for inference."""
-        providers = ["CUDAExecutionProvider"] if self.device == "gpu" else ["CPUExecutionProvider"]
+        providers = ["CUDAExecutionProvider"] if self.device.type == "cuda" else ["CPUExecutionProvider"]
         return ort.InferenceSession(self.onnx_filename, providers=providers)
 
     def inference_onnx(self, input_tensor):

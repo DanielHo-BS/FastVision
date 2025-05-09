@@ -8,6 +8,13 @@ This project demonstrates how to accelerate image classification inference by co
 - Deploy a **FastAPI** server for image classification
 - Web UI for uploading images and comparing inference results
 - Performance comparison between PyTorch and ONNX Runtime
+- Modular design with separate model initialization system
+
+## Project Structure
+- `main.py` - FastAPI server implementation
+- `model.py` - Model loading and inference functionality
+- `init_model.py` - Model initialization and environment setup
+- `react-app/` - Frontend web interface
 
 ## Installation
 
@@ -50,6 +57,9 @@ make run-backend
 
 # Run only the frontend React server
 make run-frontend
+
+# Check available models and initialization
+make init-model
 
 # Run both frontend and backend servers simultaneously
 make run
@@ -103,10 +113,27 @@ POST /predict/
 ```json
 {
     "filename": "image.jpg",
-    "pytorch_prediction": "dog",
-    "onnx_prediction": "dog",
+    "model": "resnet18",
     "pytorch_time": 0.12,
-    "onnx_time": 0.08
+    "onnx_time": 0.08,
+    "pytorch_duration": 0.12,
+    "onnx_duration": 0.08,
+    "onnx_speedup": 1.5,
+    "pytorch_label": "dog",
+    "onnx_label": "dog"
+}
+```
+
+### 2. Get Available Models
+**Endpoint:**
+```
+GET /available-models/
+```
+
+**Response:**
+```json
+{
+    "models": ["resnet18", "resnet50", "vgg16", "vision_transformer"]
 }
 ```
 
@@ -135,6 +162,12 @@ The following table shows detailed performance benchmarks for different models:
 - ONNX optimization benefits are primarily seen in CPU deployments.
 
 All measurements were performed averaging 100 inference runs per model.
+
+## Model Architecture
+The project uses a modular design:
+- `init_model.py` - Handles model initialization and provides the list of available models
+- `model.py` - Manages model loading, ONNX conversion, and inference
+- All models use pretrained ImageNet weights for classification
 
 ## Future Improvements
 - Support for more image classification models

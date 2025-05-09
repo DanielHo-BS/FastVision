@@ -52,19 +52,25 @@ install: install-python install-react
 # Run the FastAPI server
 run-backend:
 	@echo "Starting FastAPI server..."
-	. .venv/bin/activate && uvicorn main:app --reload
+	uv run uvicorn main:app --reload
 
 # Run the React development server
 run-frontend:
 	@echo "Starting React development server..."
 	cd react-app && npm run dev
 
+# Initialize model
+init-model:
+	@echo "Initializing model..."
+	uv run python -c "from init_model import get_available_models; print('Available models:', get_available_models())"
+	@echo "Model initialization check completed successfully"
+
 # Run both frontend and backend servers in parallel
 run:
 	@echo "Starting both servers in parallel..."
 	@echo "Press Ctrl+C to stop all servers"
 	@trap 'kill 0' SIGINT; \
-	. .venv/bin/activate && uvicorn main:app --reload & \
+	uv run uvicorn main:app --reload & \
 	cd react-app && npm run dev & \
 	wait
 
@@ -77,7 +83,7 @@ build-react:
 # Run tests
 test:
 	@echo "Running tests..."
-	. .venv/bin/activate && python -m pytest
+	uv run pytest
 
 # Show help message
 help:
@@ -89,6 +95,7 @@ help:
 	@echo "  install-python - Install Python dependencies using uv and pyproject.toml"
 	@echo "  install-react  - Install React dependencies"
 	@echo "  install      - Install all dependencies"
+	@echo "  init-model   - Check model initialization and available models"
 	@echo "  run-backend  - Start the FastAPI server"
 	@echo "  run-frontend - Start the React development server"
 	@echo "  run         - Start both frontend and backend servers in parallel"
@@ -96,4 +103,4 @@ help:
 	@echo "  test        - Run tests"
 	@echo "  help        - Show this help message"
 
-.PHONY: all clean clean-onnx clean-python install install-uv install-python install-react run run-backend run-frontend build-react test help 
+.PHONY: all clean clean-onnx clean-python install install-uv install-python install-react init-model run run-backend run-frontend build-react test help 

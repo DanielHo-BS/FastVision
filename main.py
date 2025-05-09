@@ -7,6 +7,7 @@ from PIL import Image
 import numpy as np
 import time
 from model import Model
+from init_model import get_available_models
 import argparse
 
 # 初始化 FastAPI
@@ -29,7 +30,7 @@ args, _ = parser.parse_known_args()
 
 # 預先載入支援的模型
 models = {}
-available_models = ['resnet18', 'resnet50', 'vgg16', 'vision_transformer']
+available_models = get_available_models()
 
 # 默認先載入 resnet18
 default_model = available_models[0]
@@ -45,7 +46,7 @@ transform = transforms.Compose([
 
 # API：獲取可用模型列表
 @app.get("/available-models/")
-async def get_available_models():
+async def get_available_models_api():
     return {"models": available_models}
 
 # API：處理影像上傳並執行 PyTorch 和 ONNX 推論
